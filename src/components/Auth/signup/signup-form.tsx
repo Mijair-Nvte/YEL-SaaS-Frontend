@@ -1,11 +1,12 @@
 "use client";
 
+import { AuthService } from "@/services/auth.service";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import Integrationimg from "@/app/assets/integrations.jpg"
+import Integrationimg from "@/app/assets/integrations.jpg";
 import {
   Field,
   FieldDescription,
@@ -22,10 +23,29 @@ export function SignupForm({
 }: React.ComponentProps<"div">) {
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulando registro exitoso
-    router.push("/dashboard");
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const payload = {
+      name: formData.get("name") as string,
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+      password_confirmation: formData.get("password_confirmation") as string,
+    };
+
+    try {
+      const res = await AuthService.register(payload);
+
+      localStorage.setItem("auth_token", res.token);
+
+      router.push("/dashboard");
+    } catch (error) {
+      console.error(error);
+      // aquí luego puedes mostrar errores de validación
+    }
   };
 
   return (
@@ -37,30 +57,58 @@ export function SignupForm({
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Create your account</h1>
                 <p className="text-muted-foreground text-sm text-balance">
-                  Enter your email below to create your account
+                  Enter your details below to create your account
                 </p>
               </div>
+
+              {/* NAME */}
+              <Field>
+                <FieldLabel htmlFor="name">Name</FieldLabel>
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="John Doe"
+                  required
+                />
+              </Field>
+
+              {/* EMAIL */}
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="m@example.com"
                   required
                 />
               </Field>
+
+              {/* PASSWORDS */}
               <Field>
                 <div className="grid grid-cols-2 gap-4">
                   <Field>
                     <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <Input id="password" type="password" required />
+                    <Input
+                      id="password"
+                      name="password"
+                      type="password"
+                      required
+                    />
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="confirm-password">Confirm</FieldLabel>
-                    <Input id="confirm-password" type="password" required />
+                    <Input
+                      id="password_confirmation"
+                      name="password_confirmation"
+                      type="password"
+                      required
+                    />
                   </Field>
                 </div>
               </Field>
+
               <Field>
                 <Button type="submit" className="w-full">
                   Create Account
@@ -94,6 +142,7 @@ export function SignupForm({
               </FieldDescription>
             </FieldGroup>
           </form>
+
           <div className="bg-muted relative hidden md:block">
             <Image
               src={Integrationimg}
